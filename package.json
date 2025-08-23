@@ -25,17 +25,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./ts/*": {
-      "import": "./src/*.ts",
-      "types": "./dist/*.d.ts"
     }
   },
   "files": [
-    "dist",
-    "src",
-    "!src/**/*.test.*",
-    "!src/**/*.spec.*"
+    "dist"
   ],
   "scripts": {
     "prewatch": "npm run build:clean",
