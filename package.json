@@ -15,7 +15,10 @@
     "react-refs",
     "merge-refs"
   ],
-  "author": "Álvaro Cuesta <alvaro-cuesta@GitHub>",
+  "author": {
+    "name": "Álvaro Cuesta",
+    "url": "https://alvaro.cuesta.dev"
+  },
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

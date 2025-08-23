@@ -133,6 +133,6 @@ breaking external refs by mistake.
 
 # License (MIT)
 
-Copyright 2025 Álvaro Cuesta ([alvaro-cuesta@GitHub](https://github.com/alvaro-cuesta/))
+Copyright 2025 [Álvaro Cuesta](https://alvaro.cuesta.dev) ([alvaro-cuesta@GitHub](https://github.com/alvaro-cuesta/))
 
 Licensed under the [MIT license](./LICENSE).
