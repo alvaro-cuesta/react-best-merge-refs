@@ -1,0 +1,40 @@
+name: Release on version tag
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout
+        name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - &setup
+        name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - &install_deps
+        name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Generate NPM package
+        run: npm pack
+
+      - name: Generate GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            react-best-merge-refs-*.tgz
