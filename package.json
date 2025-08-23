@@ -19,7 +19,7 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -33,7 +33,9 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
   ],
   "scripts": {
     "prewatch": "npm run build:clean",
