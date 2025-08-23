@@ -46,3 +46,30 @@ jobs:
 
       - name: Run ${{ matrix.linter.name }}
         run: npm run ${{ matrix.linter.script }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout
+        name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - &setup
+        name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - &install_deps
+        name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Report coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
