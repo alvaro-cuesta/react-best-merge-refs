@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'TODO.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'TODO.md'
+
+jobs:
+  lint:
+    name: Lint ${{ matrix.linter.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        linter:
+          - { name: 'TypeScript', script: 'lint:tsc' }
+          - { name: 'Prettier', script: 'lint:prettier' }
+          - { name: 'ESLint', script: 'lint:eslint' }
+          - { name: 'Knip', script: 'lint:knip' }
+          - { name: 'Madge', script: 'lint:madge' }
+    steps:
+      - &checkout
+        name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - &setup
+        name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - &install_deps
+        name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Run ${{ matrix.linter.name }}
+        run: npm run ${{ matrix.linter.script }}
