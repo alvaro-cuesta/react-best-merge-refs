@@ -111,7 +111,6 @@ allowed an array and someone compiled a list of refs like this:
 function BuggyComponent({
   ref,
   onDomReady,
-  onDomReadyEnabled,
 }: {
   ref?: Ref<HTMLInputElement>;
   onDomReadyCallbacks: (() => {})[];
