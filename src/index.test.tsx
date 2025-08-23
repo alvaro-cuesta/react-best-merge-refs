@@ -160,6 +160,20 @@ describe('useMergeRefs', () => {
   }
 
   describe('Callback refs with cleanup', () => {
+    test('Single ref', () => {
+      const spies = makeRefCallbackWithCleanupSpy();
+      const ref = makeSpiedRefCallbackWithCleanup(spies);
+
+      const rendered = render(<TestComponent refs={{ ref }} />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
+
+      rendered.rerender(<TestComponent refs={{ ref }} />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
+
+      rendered.rerender(<div />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(1, 1);
+    });
+
     describe('All stable', () => {
       test('None are called on re-render', () => {
         const spies1 = makeRefCallbackWithCleanupSpy();
@@ -370,28 +384,51 @@ describe('useMergeRefs', () => {
   });
 
   describe('Object refs', () => {
-    test('no spurious cleanups', () => {
-      const ref = { current: 1337 };
+    test('Single ref', () => {
+      const spy = makeRefObjectSpy<HTMLDivElement>(null);
 
-      const Test = ({
-        show,
-        externalRef,
-      }: {
-        show?: boolean;
-        externalRef?: Ref<unknown>;
-      }) => {
-        const mergedRefs = useMergeRefs({ externalRef });
+      const Test = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
+        return <div ref={useMergeRefs({ ref })} />;
+      };
+
+      const rendered = render(<Test />);
+      expect(spy.history).toHaveLength(1);
+      expect(spy.history[0]).toEqual(null);
+
+      rendered.rerender(<Test ref={spy.ref} />);
+      expect(spy.history).toHaveLength(2);
+      expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
+
+      rendered.rerender(<Test ref={spy.ref} />);
+      expect(spy.history).toHaveLength(2);
+      expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
+
+      rendered.rerender(<Test />);
+      expect(spy.history).toHaveLength(3);
+      expect(spy.history[2]).toEqual(null);
+    });
+
+    test('No spurious cleanups', () => {
+      const spy = makeRefObjectSpy<number>(1337);
+
+      const Test = ({ show, ref }: { show?: boolean; ref?: Ref<unknown> }) => {
+        const mergedRefs = useMergeRefs({ ref });
         return <div>{show ? <div ref={mergedRefs} /> : null}</div>;
       };
 
       const rendered = render(<Test />);
-      expect(ref.current).toEqual(1337);
+      expect(spy.history).toHaveLength(1);
+      expect(spy.history[0]).toEqual(1337);
 
-      rendered.rerender(<Test externalRef={ref} />);
-      expect(ref.current).toEqual(1337);
+      // Here we set a ref but never `show` so it never gets assigned a value
+      // If our code is bugge it might assign a value here!
+      rendered.rerender(<Test ref={spy.ref} />);
+      expect(spy.history).toHaveLength(1);
+      expect(spy.history[0]).toEqual(1337);
 
       rendered.rerender(<Test />);
-      expect(ref.current).toEqual(1337);
+      expect(spy.history).toHaveLength(1);
+      expect(spy.history[0]).toEqual(1337);
     });
   });
 });
