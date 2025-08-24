@@ -5,7 +5,6 @@ import {
   makeRefCallbackWithCleanupSpy,
   makeSpiedRefCallbackWithCleanup,
 } from '../test/utils/ref-callback-with-cleanup.js';
-import { makeRefCallbackSpy } from '../test/utils/ref-callback.js';
 import { makeRefObjectSpy } from '../test/utils/ref-object.js';
 import { useMergeRefs, type RefCollection } from './index.js';
 
@@ -60,19 +59,19 @@ describe('Callback refs (no cleanup)', () => {
   describe('React (baseline)', () => {
     describe('Stable', () => {
       test('Is not called on re-renders', () => {
-        const spy = makeRefCallbackSpy();
+        const ref = vi.fn();
 
-        const r = render(<TestRefCallback ref={spy.ref} />);
-        expect(spy.ref).toBeCalledTimes(1);
-        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        const r = render(<TestRefCallback ref={ref} />);
+        expect(ref).toBeCalledTimes(1);
+        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
-        r.rerender(<TestRefCallback ref={spy.ref} />);
-        expect(spy.ref).toBeCalledTimes(1);
-        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        r.rerender(<TestRefCallback ref={ref} />);
+        expect(ref).toBeCalledTimes(1);
+        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
         r.rerender(<div />);
-        expect(spy.ref).toBeCalledTimes(2);
-        expect(spy.ref).nthCalledWith(
+        expect(ref).toBeCalledTimes(2);
+        expect(ref).nthCalledWith(
           2,
           // @todo WTF? Why all the `undefined`s here?
           null,
@@ -86,32 +85,32 @@ describe('Callback refs (no cleanup)', () => {
 
     describe('Unstable', () => {
       test('Is called on every re-render', () => {
-        const spy = makeRefCallbackSpy();
+        const ref = vi.fn();
 
         const r = render(
           <TestRefCallback
             ref={(v) => {
-              spy.ref(v);
+              ref(v);
             }}
           />,
         );
-        expect(spy.ref).toBeCalledTimes(1);
-        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        expect(ref).toBeCalledTimes(1);
+        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
         r.rerender(
           <TestRefCallback
             ref={(v) => {
-              spy.ref(v);
+              ref(v);
             }}
           />,
         );
-        expect(spy.ref).toBeCalledTimes(3);
-        expect(spy.ref).nthCalledWith(2, null);
-        expect(spy.ref).nthCalledWith(3, r.getByTestId('ref-div'));
+        expect(ref).toBeCalledTimes(3);
+        expect(ref).nthCalledWith(2, null);
+        expect(ref).nthCalledWith(3, r.getByTestId('ref-div'));
 
         r.rerender(<div />);
-        expect(spy.ref).toBeCalledTimes(4);
-        expect(spy.ref).nthCalledWith(4, null);
+        expect(ref).toBeCalledTimes(4);
+        expect(ref).nthCalledWith(4, null);
       });
     });
   });
@@ -160,13 +159,13 @@ describe('Callback refs (with cleanup)', () => {
       const spies = makeRefCallbackWithCleanupSpy();
       const ref = makeSpiedRefCallbackWithCleanup(spies);
 
-      const rendered = render(<TestRefCollection refs={{ ref }} />);
+      const r = render(<TestRefCollection refs={{ ref }} />);
       expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-      rendered.rerender(<TestRefCollection refs={{ ref }} />);
+      r.rerender(<TestRefCollection refs={{ ref }} />);
       expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-      rendered.rerender(<div />);
+      r.rerender(<div />);
       expect(spies).toHaveRefCallbackWithCleanupTimes(1, 1);
     });
 
@@ -177,15 +176,15 @@ describe('Callback refs (with cleanup)', () => {
         const spies2 = makeRefCallbackWithCleanupSpy();
         const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
 
-        const rendered = render(<TestRefCollection refs={{ ref1, ref2 }} />);
+        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
       });
@@ -200,19 +199,19 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(
+        const r = render(
           <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -226,19 +225,19 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(
+        const r = render(
           <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -252,17 +251,17 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(<TestRefCollection refs={{ ref1, ref2 }} />);
+        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -278,21 +277,19 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
-        );
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(
+        r.rerender(
           <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -306,21 +303,17 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
-        );
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(
-          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
-        );
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3: null }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -334,19 +327,17 @@ describe('Callback refs (with cleanup)', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
-        );
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -361,7 +352,7 @@ describe('Callback refs (with cleanup)', () => {
         const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
         const spies3 = makeRefCallbackWithCleanupSpy();
 
-        const rendered = render(
+        const r = render(
           <TestRefCollection
             refs={{ ref1, ref2, ref3: makeSpiedRefCallbackWithCleanup(spies3) }}
           />,
@@ -370,7 +361,7 @@ describe('Callback refs (with cleanup)', () => {
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(
+        r.rerender(
           <TestRefCollection
             refs={{ ref1, ref2, ref3: makeSpiedRefCallbackWithCleanup(spies3) }}
           />,
@@ -379,7 +370,7 @@ describe('Callback refs (with cleanup)', () => {
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(2, 1);
 
-        rendered.rerender(<div />);
+        r.rerender(<div />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 1);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(2, 2);
