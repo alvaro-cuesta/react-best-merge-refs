@@ -6,8 +6,10 @@ on:
       - 'v*.*.*'
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - &checkout
         name: Check out Git repository
@@ -27,6 +29,12 @@ jobs:
 
       - name: Generate NPM package
         run: npm pack
+
+      # This will also run the lint, test and build due to "prepare" and "prepublishOnly"
+      - name: Publish to NPM
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate GitHub release
         uses: softprops/action-gh-release@v2
