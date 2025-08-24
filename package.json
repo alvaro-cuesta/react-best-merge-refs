@@ -1,6 +1,6 @@
 {
   "name": "react-best-merge-refs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "React utility to merge multiple refs. Fully correct behavior, matching React 19.",
   "homepage": "https://github.com/alvaro-cuesta/react-best-merge-refs#readme",
   "repository": {
