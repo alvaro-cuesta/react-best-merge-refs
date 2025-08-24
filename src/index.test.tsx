@@ -9,21 +9,29 @@ import { makeRefCallbackSpy } from '../test/utils/ref-callback.js';
 import { makeRefObjectSpy } from '../test/utils/ref-object.js';
 import { useMergeRefs, type RefCollection } from './index.js';
 
-describe('React refs', () => {
-  describe('Callback refs', () => {
-    function TestComponent({ ref }: { ref: RefCallback<HTMLElement> }) {
-      return <div ref={ref} />;
-    }
+function TestRefCallback({ ref }: { ref: RefCallback<HTMLDivElement> }) {
+  return <div ref={ref} />;
+}
 
+function TestRefObject({ ref }: { ref: RefObject<HTMLDivElement | null> }) {
+  return <div ref={ref} />;
+}
+
+function TestRefCollection({ refs }: { refs: RefCollection<HTMLDivElement> }) {
+  return <div ref={useMergeRefs(refs)} />;
+}
+
+describe('Callback refs (no cleanup)', () => {
+  describe('React (baseline)', () => {
     describe('Stable', () => {
       test('Is not called on re-renders', () => {
         const spy = makeRefCallbackSpy();
 
-        const r = render(<TestComponent ref={spy.ref} />);
+        const r = render(<TestRefCallback ref={spy.ref} />);
         expect(spy.ref).toBeCalledTimes(1);
         expect(spy.ref).not.nthCalledWith(1, null);
 
-        r.rerender(<TestComponent ref={spy.ref} />);
+        r.rerender(<TestRefCallback ref={spy.ref} />);
         expect(spy.ref).toBeCalledTimes(1);
         expect(spy.ref).not.nthCalledWith(1, null);
 
@@ -46,7 +54,7 @@ describe('React refs', () => {
         const spy = makeRefCallbackSpy();
 
         const r = render(
-          <TestComponent
+          <TestRefCallback
             ref={(v) => {
               spy.ref(v);
             }}
@@ -55,7 +63,7 @@ describe('React refs', () => {
         expect(spy.ref).toBeCalledTimes(1);
 
         r.rerender(
-          <TestComponent
+          <TestRefCallback
             ref={(v) => {
               spy.ref(v);
             }}
@@ -71,21 +79,19 @@ describe('React refs', () => {
       });
     });
   });
+});
 
-  describe('Callback refs with cleanup', () => {
-    function TestComponent({ ref }: { ref: RefCallback<HTMLElement> }) {
-      return <div ref={ref} />;
-    }
-
+describe('Callback refs (with cleanup)', () => {
+  describe('React (baseline)', () => {
     describe('Stable', () => {
       test('Is not called on re-renders', () => {
         const spies = makeRefCallbackWithCleanupSpy();
         const ref = makeSpiedRefCallbackWithCleanup(spies);
 
-        const r = render(<TestComponent ref={ref} />);
+        const r = render(<TestRefCallback ref={ref} />);
         expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        r.rerender(<TestComponent ref={ref} />);
+        r.rerender(<TestRefCallback ref={ref} />);
         expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
         r.rerender(<div />);
@@ -98,12 +104,12 @@ describe('React refs', () => {
         const spies = makeRefCallbackWithCleanupSpy();
 
         const r = render(
-          <TestComponent ref={makeSpiedRefCallbackWithCleanup(spies)} />,
+          <TestRefCallback ref={makeSpiedRefCallbackWithCleanup(spies)} />,
         );
         expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
         r.rerender(
-          <TestComponent ref={makeSpiedRefCallbackWithCleanup(spies)} />,
+          <TestRefCallback ref={makeSpiedRefCallbackWithCleanup(spies)} />,
         );
         expect(spies).toHaveRefCallbackWithCleanupTimes(2, 1);
 
@@ -113,61 +119,15 @@ describe('React refs', () => {
     });
   });
 
-  describe('Object refs', () => {
-    function TestComponent({ ref }: { ref: RefObject<HTMLDivElement | null> }) {
-      return <div ref={ref} />;
-    }
-
-    describe('Stable', () => {
-      test('Is not updated on re-renders', () => {
-        const spy = makeRefObjectSpy<HTMLDivElement>(null);
-
-        const r = render(<TestComponent ref={spy.ref} />);
-        expect(spy.history).toHaveLength(2);
-
-        r.rerender(<TestComponent ref={spy.ref} />);
-        expect(spy.history).toHaveLength(2);
-
-        r.rerender(<div />);
-        expect(spy.history).toHaveLength(3);
-      });
-    });
-
-    describe('Unstable', () => {
-      test('Is updated on every re-render', () => {
-        const spy1 = makeRefObjectSpy<HTMLDivElement>(null);
-        const spy2 = makeRefObjectSpy<HTMLDivElement>(null);
-
-        const r = render(<TestComponent ref={spy1.ref} />);
-        expect(spy1.history).toHaveLength(2);
-        expect(spy2.history).toHaveLength(1);
-
-        r.rerender(<TestComponent ref={spy2.ref} />);
-        expect(spy1.history).toHaveLength(3);
-        expect(spy2.history).toHaveLength(2);
-
-        r.rerender(<div />);
-        expect(spy1.history).toHaveLength(3);
-        expect(spy2.history).toHaveLength(3);
-      });
-    });
-  });
-});
-
-describe('useMergeRefs', () => {
-  function TestComponent({ refs }: { refs: RefCollection<HTMLElement> }) {
-    return <div ref={useMergeRefs(refs)} />;
-  }
-
-  describe('Callback refs with cleanup', () => {
+  describe('useMergeRefs', () => {
     test('Single ref', () => {
       const spies = makeRefCallbackWithCleanupSpy();
       const ref = makeSpiedRefCallbackWithCleanup(spies);
 
-      const rendered = render(<TestComponent refs={{ ref }} />);
+      const rendered = render(<TestRefCollection refs={{ ref }} />);
       expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-      rendered.rerender(<TestComponent refs={{ ref }} />);
+      rendered.rerender(<TestRefCollection refs={{ ref }} />);
       expect(spies).toHaveRefCallbackWithCleanupTimes(1, 0);
 
       rendered.rerender(<div />);
@@ -181,11 +141,11 @@ describe('useMergeRefs', () => {
         const spies2 = makeRefCallbackWithCleanupSpy();
         const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
 
-        const rendered = render(<TestComponent refs={{ ref1, ref2 }} />);
+        const rendered = render(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2 }} />);
+        rendered.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
 
@@ -205,13 +165,13 @@ describe('useMergeRefs', () => {
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
         const rendered = render(
-          <TestComponent refs={{ ref1, ref2, ref3: undefined }} />,
+          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
@@ -231,13 +191,13 @@ describe('useMergeRefs', () => {
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
         const rendered = render(
-          <TestComponent refs={{ ref1, ref2, ref3: null }} />,
+          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
@@ -256,12 +216,12 @@ describe('useMergeRefs', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(<TestComponent refs={{ ref1, ref2 }} />);
+        const rendered = render(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(0, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        rendered.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
@@ -282,13 +242,15 @@ describe('useMergeRefs', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        const rendered = render(
+          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
+        );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
         rendered.rerender(
-          <TestComponent refs={{ ref1, ref2, ref3: undefined }} />,
+          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
         );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
@@ -308,12 +270,16 @@ describe('useMergeRefs', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        const rendered = render(
+          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
+        );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2, ref3: null }} />);
+        rendered.rerender(
+          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
+        );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -332,12 +298,14 @@ describe('useMergeRefs', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
         const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const rendered = render(<TestComponent refs={{ ref1, ref2, ref3 }} />);
+        const rendered = render(
+          <TestRefCollection refs={{ ref1, ref2, ref3 }} />,
+        );
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
-        rendered.rerender(<TestComponent refs={{ ref1, ref2 }} />);
+        rendered.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
         expect(spies1).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies2).toHaveRefCallbackWithCleanupTimes(1, 0);
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 1);
@@ -358,7 +326,7 @@ describe('useMergeRefs', () => {
         const spies3 = makeRefCallbackWithCleanupSpy();
 
         const rendered = render(
-          <TestComponent
+          <TestRefCollection
             refs={{ ref1, ref2, ref3: makeSpiedRefCallbackWithCleanup(spies3) }}
           />,
         );
@@ -367,7 +335,7 @@ describe('useMergeRefs', () => {
         expect(spies3).toHaveRefCallbackWithCleanupTimes(1, 0);
 
         rendered.rerender(
-          <TestComponent
+          <TestRefCollection
             refs={{ ref1, ref2, ref3: makeSpiedRefCallbackWithCleanup(spies3) }}
           />,
         );
@@ -382,28 +350,62 @@ describe('useMergeRefs', () => {
       });
     });
   });
+});
 
-  describe('Object refs', () => {
+describe('Object refs', () => {
+  describe('React (baseline)', () => {
+    describe('Stable', () => {
+      test('Is not updated on re-renders', () => {
+        const spy = makeRefObjectSpy<HTMLDivElement>(null);
+
+        const r = render(<TestRefObject ref={spy.ref} />);
+        expect(spy.history).toHaveLength(2);
+
+        r.rerender(<TestRefObject ref={spy.ref} />);
+        expect(spy.history).toHaveLength(2);
+
+        r.rerender(<div />);
+        expect(spy.history).toHaveLength(3);
+      });
+    });
+
+    describe('Unstable', () => {
+      test('Is updated on every re-render', () => {
+        const spy1 = makeRefObjectSpy<HTMLDivElement>(null);
+        const spy2 = makeRefObjectSpy<HTMLDivElement>(null);
+
+        const r = render(<TestRefObject ref={spy1.ref} />);
+        expect(spy1.history).toHaveLength(2);
+        expect(spy2.history).toHaveLength(1);
+
+        r.rerender(<TestRefObject ref={spy2.ref} />);
+        expect(spy1.history).toHaveLength(3);
+        expect(spy2.history).toHaveLength(2);
+
+        r.rerender(<div />);
+        expect(spy1.history).toHaveLength(3);
+        expect(spy2.history).toHaveLength(3);
+      });
+    });
+  });
+
+  describe('useMergeRefs', () => {
     test('Single ref', () => {
       const spy = makeRefObjectSpy<HTMLDivElement>(null);
 
-      const Test = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
-        return <div ref={useMergeRefs({ ref })} />;
-      };
-
-      const rendered = render(<Test />);
+      const rendered = render(<TestRefCollection refs={{}} />);
       expect(spy.history).toHaveLength(1);
       expect(spy.history[0]).toEqual(null);
 
-      rendered.rerender(<Test ref={spy.ref} />);
+      rendered.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
       expect(spy.history).toHaveLength(2);
       expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
 
-      rendered.rerender(<Test ref={spy.ref} />);
+      rendered.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
       expect(spy.history).toHaveLength(2);
       expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
 
-      rendered.rerender(<Test />);
+      rendered.rerender(<TestRefCollection refs={{}} />);
       expect(spy.history).toHaveLength(3);
       expect(spy.history[2]).toEqual(null);
     });
@@ -421,7 +423,7 @@ describe('useMergeRefs', () => {
       expect(spy.history[0]).toEqual(1337);
 
       // Here we set a ref but never `show` so it never gets assigned a value
-      // If our code is bugge it might assign a value here!
+      // If our code is bugged it might assign a value here!
       rendered.rerender(<Test ref={spy.ref} />);
       expect(spy.history).toHaveLength(1);
       expect(spy.history[0]).toEqual(1337);
