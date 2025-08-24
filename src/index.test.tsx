@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import { render } from '@testing-library/react';
-import type { Ref, RefCallback, RefObject } from 'react';
+import type { RefCallback, RefObject } from 'react';
 import {
   makeRefCallbackWithCleanupSpy,
   makeSpiedRefCallbackWithCleanup,
@@ -10,15 +10,50 @@ import { makeRefObjectSpy } from '../test/utils/ref-object.js';
 import { useMergeRefs, type RefCollection } from './index.js';
 
 function TestRefCallback({ ref }: { ref: RefCallback<HTMLDivElement> }) {
-  return <div ref={ref} />;
+  return (
+    <div
+      ref={ref}
+      data-testid="ref-div"
+    />
+  );
 }
 
 function TestRefObject({ ref }: { ref: RefObject<HTMLDivElement | null> }) {
-  return <div ref={ref} />;
+  return (
+    <div
+      ref={ref}
+      data-testid="ref-div"
+    />
+  );
 }
 
 function TestRefCollection({ refs }: { refs: RefCollection<HTMLDivElement> }) {
-  return <div ref={useMergeRefs(refs)} />;
+  return (
+    <div
+      ref={useMergeRefs(refs)}
+      data-testid="ref-div"
+    />
+  );
+}
+
+function TestSpuriousCleanups<T extends HTMLDivElement>({
+  refs,
+  show,
+}: {
+  refs: RefCollection<T>;
+  show?: boolean;
+}) {
+  const mergedRefs = useMergeRefs(refs);
+  return (
+    <div data-testid="wrapper-div">
+      {show ? (
+        <div
+          ref={mergedRefs}
+          data-testid="ref-div"
+        />
+      ) : null}
+    </div>
+  );
 }
 
 describe('Callback refs (no cleanup)', () => {
@@ -29,11 +64,11 @@ describe('Callback refs (no cleanup)', () => {
 
         const r = render(<TestRefCallback ref={spy.ref} />);
         expect(spy.ref).toBeCalledTimes(1);
-        expect(spy.ref).not.nthCalledWith(1, null);
+        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
         r.rerender(<TestRefCallback ref={spy.ref} />);
         expect(spy.ref).toBeCalledTimes(1);
-        expect(spy.ref).not.nthCalledWith(1, null);
+        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
         r.rerender(<div />);
         expect(spy.ref).toBeCalledTimes(2);
@@ -61,6 +96,7 @@ describe('Callback refs (no cleanup)', () => {
           />,
         );
         expect(spy.ref).toBeCalledTimes(1);
+        expect(spy.ref).nthCalledWith(1, r.getByTestId('ref-div'));
 
         r.rerender(
           <TestRefCallback
@@ -71,7 +107,7 @@ describe('Callback refs (no cleanup)', () => {
         );
         expect(spy.ref).toBeCalledTimes(3);
         expect(spy.ref).nthCalledWith(2, null);
-        expect(spy.ref).not.nthCalledWith(3, null);
+        expect(spy.ref).nthCalledWith(3, r.getByTestId('ref-div'));
 
         r.rerender(<div />);
         expect(spy.ref).toBeCalledTimes(4);
@@ -359,13 +395,14 @@ describe('Object refs', () => {
         const spy = makeRefObjectSpy<HTMLDivElement>(null);
 
         const r = render(<TestRefObject ref={spy.ref} />);
-        expect(spy.history).toHaveLength(2);
+        const r1div = r.getByTestId('ref-div');
+        expect(spy.history).toEqual([null, r1div]);
 
         r.rerender(<TestRefObject ref={spy.ref} />);
-        expect(spy.history).toHaveLength(2);
+        expect(spy.history).toEqual([null, r1div]);
 
         r.rerender(<div />);
-        expect(spy.history).toHaveLength(3);
+        expect(spy.history).toEqual([null, r1div, null]);
       });
     });
 
@@ -375,16 +412,18 @@ describe('Object refs', () => {
         const spy2 = makeRefObjectSpy<HTMLDivElement>(null);
 
         const r = render(<TestRefObject ref={spy1.ref} />);
-        expect(spy1.history).toHaveLength(2);
-        expect(spy2.history).toHaveLength(1);
+        const r1div = r.getByTestId('ref-div');
+        expect(spy1.history).toEqual([null, r1div]);
+        expect(spy2.history).toEqual([null]);
 
         r.rerender(<TestRefObject ref={spy2.ref} />);
-        expect(spy1.history).toHaveLength(3);
-        expect(spy2.history).toHaveLength(2);
+        const r2div = r.getByTestId('ref-div');
+        expect(spy1.history).toEqual([null, r1div, null]);
+        expect(spy2.history).toEqual([null, r2div]);
 
         r.rerender(<div />);
-        expect(spy1.history).toHaveLength(3);
-        expect(spy2.history).toHaveLength(3);
+        expect(spy1.history).toEqual([null, r1div, null]);
+        expect(spy2.history).toEqual([null, r2div, null]);
       });
     });
   });
@@ -393,44 +432,34 @@ describe('Object refs', () => {
     test('Single ref', () => {
       const spy = makeRefObjectSpy<HTMLDivElement>(null);
 
-      const rendered = render(<TestRefCollection refs={{}} />);
-      expect(spy.history).toHaveLength(1);
-      expect(spy.history[0]).toEqual(null);
+      const r = render(<TestRefCollection refs={{}} />);
+      expect(spy.history).toEqual([null]);
 
-      rendered.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
-      expect(spy.history).toHaveLength(2);
-      expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
+      r.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
+      const r1div = r.getByTestId('ref-div');
+      expect(spy.history).toEqual([null, r1div]);
 
-      rendered.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
-      expect(spy.history).toHaveLength(2);
-      expect(spy.history[1]).toBeInstanceOf(HTMLDivElement);
+      r.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
+      expect(spy.history).toEqual([null, r1div]);
 
-      rendered.rerender(<TestRefCollection refs={{}} />);
-      expect(spy.history).toHaveLength(3);
-      expect(spy.history[2]).toEqual(null);
+      r.rerender(<TestRefCollection refs={{}} />);
+      expect(spy.history).toEqual([null, r1div, null]);
     });
 
     test('No spurious cleanups', () => {
-      const spy = makeRefObjectSpy<number>(1337);
+      const fakeDiv = document.createElement('div');
+      const spy = makeRefObjectSpy(fakeDiv);
 
-      const Test = ({ show, ref }: { show?: boolean; ref?: Ref<unknown> }) => {
-        const mergedRefs = useMergeRefs({ ref });
-        return <div>{show ? <div ref={mergedRefs} /> : null}</div>;
-      };
+      const r = render(<TestSpuriousCleanups refs={{}} />);
+      expect(spy.history).toEqual([fakeDiv]);
 
-      const rendered = render(<Test />);
-      expect(spy.history).toHaveLength(1);
-      expect(spy.history[0]).toEqual(1337);
+      // Here we set a ref (and thus `useMergeRefs` stores it) but never `show` so it never gets assigned a value
+      // If our code is bugged it might assign a value here, or set it to `null` or something...
+      r.rerender(<TestSpuriousCleanups refs={{ ref: spy.ref }} />);
+      expect(spy.history).toEqual([fakeDiv]);
 
-      // Here we set a ref but never `show` so it never gets assigned a value
-      // If our code is bugged it might assign a value here!
-      rendered.rerender(<Test ref={spy.ref} />);
-      expect(spy.history).toHaveLength(1);
-      expect(spy.history[0]).toEqual(1337);
-
-      rendered.rerender(<Test />);
-      expect(spy.history).toHaveLength(1);
-      expect(spy.history[0]).toEqual(1337);
+      r.rerender(<TestSpuriousCleanups refs={{}} />);
+      expect(spy.history).toEqual([fakeDiv]);
     });
   });
 });
