@@ -636,7 +636,7 @@ describe('Object refs', () => {
   describe('React (baseline)', () => {
     describe('Stable', () => {
       test('Is not updated on re-renders', () => {
-        const spy = makeRefObjectSpy<HTMLDivElement>(null);
+        const spy = makeRefObjectSpy(null);
 
         const r = render(<TestRefObject ref={spy.ref} />);
         const r1div = r.getByTestId('ref-div');
@@ -652,8 +652,8 @@ describe('Object refs', () => {
 
     describe('Unstable', () => {
       test('Is updated on every re-render', () => {
-        const spy1 = makeRefObjectSpy<HTMLDivElement>(null);
-        const spy2 = makeRefObjectSpy<HTMLDivElement>(null);
+        const spy1 = makeRefObjectSpy(null);
+        const spy2 = makeRefObjectSpy(null);
 
         const r = render(<TestRefObject ref={spy1.ref} />);
         const r1div = r.getByTestId('ref-div');
@@ -674,7 +674,7 @@ describe('Object refs', () => {
 
   describe('useMergeRefs', () => {
     test('Single ref', () => {
-      const spy = makeRefObjectSpy<HTMLDivElement>(null);
+      const spy = makeRefObjectSpy(null);
 
       const r = render(<TestRefCollection refs={{}} />);
       expect(spy.history).toEqual([null]);
