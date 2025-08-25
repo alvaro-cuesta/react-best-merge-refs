@@ -333,6 +333,22 @@ describe('Callback refs (no cleanup)', () => {
         expect(ref3.mock.calls).toEqual([[r1div], [null], [r1div], [null]]);
       });
     });
+
+    test('No spurious calls', () => {
+      const ref = vi.fn();
+
+      const r = render(<TestSpuriousCleanups refs={{}} />);
+      expect(ref.mock.calls).toEqual([]);
+
+      // Here we set a ref (and thus `useMergeRefs` stores it) but never `show` so it never gets assigned a value
+      // If our code is bugged it might assign a value here, or set it to `null` or something...
+      r.rerender(<TestSpuriousCleanups refs={{ ref }} />);
+      expect(ref.mock.calls).toEqual([]);
+
+      // same here, it might try to do a spurious cleanup even though the ref was actually never assigned
+      r.rerender(<TestSpuriousCleanups refs={{}} />);
+      expect(ref.mock.calls).toEqual([]);
+    });
   });
 });
 
@@ -596,6 +612,23 @@ describe('Callback refs (with cleanup)', () => {
         expect(spies3).toHaveRefCallbackWithCleanupTimes(2, 2);
       });
     });
+
+    test('No spurious calls', () => {
+      const spies = makeRefCallbackWithCleanupSpy();
+      const ref = makeSpiedRefCallbackWithCleanup(spies);
+
+      const r = render(<TestSpuriousCleanups refs={{}} />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(0, 0);
+
+      // Here we set a ref (and thus `useMergeRefs` stores it) but never `show` so it never gets assigned a value
+      // If our code is bugged it might assign a value here, or set it to `null` or something...
+      r.rerender(<TestSpuriousCleanups refs={{ ref }} />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(0, 0);
+
+      // same here, it might try to do a spurious cleanup even though the ref was actually never assigned
+      r.rerender(<TestSpuriousCleanups refs={{}} />);
+      expect(spies).toHaveRefCallbackWithCleanupTimes(0, 0);
+    });
   });
 });
 
@@ -657,7 +690,7 @@ describe('Object refs', () => {
       expect(spy.history).toEqual([null, r1div, null]);
     });
 
-    test('No spurious cleanups', () => {
+    test('No spurious assignments', () => {
       const fakeDiv = document.createElement('div');
       const spy = makeRefObjectSpy(fakeDiv);
 
@@ -669,6 +702,7 @@ describe('Object refs', () => {
       r.rerender(<TestSpuriousCleanups refs={{ ref: spy.ref }} />);
       expect(spy.history).toEqual([fakeDiv]);
 
+      // same here, it might try to do a spurious cleanup even though the ref was actually never assigned
       r.rerender(<TestSpuriousCleanups refs={{}} />);
       expect(spy.history).toEqual([fakeDiv]);
     });
