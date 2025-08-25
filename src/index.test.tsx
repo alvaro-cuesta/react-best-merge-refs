@@ -62,24 +62,24 @@ describe('Callback refs (no cleanup)', () => {
         const ref = vi.fn();
 
         const r = render(<TestRefCallback ref={ref} />);
-        expect(ref).toBeCalledTimes(1);
-        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        const r1div = r.getByTestId('ref-div');
+        expect(ref.mock.calls).toEqual([[r1div]]);
 
         r.rerender(<TestRefCallback ref={ref} />);
-        expect(ref).toBeCalledTimes(1);
-        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        expect(ref.mock.calls).toEqual([[r1div]]);
 
         r.rerender(<div />);
-        expect(ref).toBeCalledTimes(2);
-        expect(ref).nthCalledWith(
-          2,
-          // @todo WTF? Why all the `undefined`s here?
-          null,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-        );
+        expect(ref.mock.calls).toEqual([
+          [r1div],
+          [
+            null,
+            // @todo WTF? Why all the `undefined`s here?
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+          ],
+        ]);
       });
     });
 
@@ -94,8 +94,8 @@ describe('Callback refs (no cleanup)', () => {
             }}
           />,
         );
-        expect(ref).toBeCalledTimes(1);
-        expect(ref).nthCalledWith(1, r.getByTestId('ref-div'));
+        const r1div = r.getByTestId('ref-div');
+        expect(ref.mock.calls).toEqual([[r1div]]);
 
         r.rerender(
           <TestRefCallback
@@ -104,13 +104,11 @@ describe('Callback refs (no cleanup)', () => {
             }}
           />,
         );
-        expect(ref).toBeCalledTimes(3);
-        expect(ref).nthCalledWith(2, null);
-        expect(ref).nthCalledWith(3, r.getByTestId('ref-div'));
+        const r2div = r.getByTestId('ref-div');
+        expect(ref.mock.calls).toEqual([[r1div], [null], [r2div]]);
 
         r.rerender(<div />);
-        expect(ref).toBeCalledTimes(4);
-        expect(ref).nthCalledWith(4, null);
+        expect(ref.mock.calls).toEqual([[r1div], [null], [r2div], [null]]);
       });
     });
   });
