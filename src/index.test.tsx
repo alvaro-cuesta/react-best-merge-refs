@@ -607,6 +607,117 @@ describe('Object refs', () => {
       expect(history).toEqual([null, r1div, null]);
     });
 
+    describe('All stable', () => {
+      test('None are called on re-render', () => {
+        const [ref1, history1] = makeRefObjectSpy(null);
+        const [ref2, history2] = makeRefObjectSpy(null);
+
+        const r = render(<TestRefCollection refs={{}} />);
+        expect(history1).toEqual([null]);
+        expect(history2).toEqual([null]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div]);
+
+        r.rerender(<TestRefCollection refs={{}} />);
+        expect(history1).toEqual([null, r1div, null]);
+        expect(history2).toEqual([null, r1div, null]);
+      });
+    });
+
+    describe('Add a new ref', () => {
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])(
+        '(%s) Only the added key is called on re-renders',
+        (_, ref3Wrapper) => {
+          const [ref1, history1] = makeRefObjectSpy(null);
+          const [ref2, history2] = makeRefObjectSpy(null);
+          const [ref3, history3] = makeRefObjectSpy(null);
+
+          const r = render(
+            <TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />,
+          );
+          const r1div = r.getByTestId('ref-div');
+          expect(history1).toEqual([null, r1div]);
+          expect(history2).toEqual([null, r1div]);
+          expect(history3).toEqual([null]);
+
+          r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+          expect(history1).toEqual([null, r1div]);
+          expect(history2).toEqual([null, r1div]);
+          expect(history3).toEqual([null, r1div]);
+
+          r.rerender(<div />);
+          expect(history1).toEqual([null, r1div, null]);
+          expect(history2).toEqual([null, r1div, null]);
+          expect(history3).toEqual([null, r1div, null]);
+        },
+      );
+    });
+
+    describe('Remove a ref', () => {
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])('(%s) Only the removed key is cleaned up', (_, ref3Wrapper) => {
+        const [ref1, history1] = makeRefObjectSpy(null);
+        const [ref2, history2] = makeRefObjectSpy(null);
+        const [ref3, history3] = makeRefObjectSpy(null);
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div]);
+        expect(history3).toEqual([null, r1div]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />);
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div]);
+        expect(history3).toEqual([null, r1div, null]);
+
+        r.rerender(<div />);
+        expect(history1).toEqual([null, r1div, null]);
+        expect(history2).toEqual([null, r1div, null]);
+        expect(history3).toEqual([null, r1div, null]);
+      });
+    });
+
+    describe('External unstable', () => {
+      test('Only the unstable ref is called on every render', () => {
+        const [ref1, history1] = makeRefObjectSpy(null);
+
+        const r = render(<TestRefCollection refs={{}} />);
+        expect(history1).toEqual([null]);
+
+        const [ref2, history2] = makeRefObjectSpy(null);
+        r.rerender(<TestRefCollection refs={{ ref1, refx: ref2 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div]);
+
+        const [ref3, history3] = makeRefObjectSpy(null);
+        r.rerender(<TestRefCollection refs={{ ref1, refx: ref3 }} />);
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null, r1div, null]);
+        expect(history3).toEqual([null, r1div]);
+
+        r.rerender(<TestRefCollection refs={{}} />);
+        expect(history1).toEqual([null, r1div, null]);
+        expect(history2).toEqual([null, r1div, null]);
+        expect(history3).toEqual([null, r1div, null]);
+      });
+    });
+
     test('No spurious assignments', () => {
       const fakeDiv = document.createElement('div');
       const [ref, history] = makeRefObjectSpy(fakeDiv);
