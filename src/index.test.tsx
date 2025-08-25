@@ -553,75 +553,75 @@ describe('Object refs', () => {
   describe('React (baseline)', () => {
     describe('Stable', () => {
       test('Is not updated on re-renders', () => {
-        const spy = makeRefObjectSpy(null);
+        const [ref, history] = makeRefObjectSpy(null);
 
-        const r = render(<TestRefObject ref={spy.ref} />);
+        const r = render(<TestRefObject ref={ref} />);
         const r1div = r.getByTestId('ref-div');
-        expect(spy.history).toEqual([null, r1div]);
+        expect(history).toEqual([null, r1div]);
 
-        r.rerender(<TestRefObject ref={spy.ref} />);
-        expect(spy.history).toEqual([null, r1div]);
+        r.rerender(<TestRefObject ref={ref} />);
+        expect(history).toEqual([null, r1div]);
 
         r.rerender(<div />);
-        expect(spy.history).toEqual([null, r1div, null]);
+        expect(history).toEqual([null, r1div, null]);
       });
     });
 
     describe('Unstable', () => {
       test('Is updated on every re-render', () => {
-        const spy1 = makeRefObjectSpy(null);
-        const spy2 = makeRefObjectSpy(null);
+        const [ref1, history1] = makeRefObjectSpy(null);
+        const [ref2, history2] = makeRefObjectSpy(null);
 
-        const r = render(<TestRefObject ref={spy1.ref} />);
+        const r = render(<TestRefObject ref={ref1} />);
         const r1div = r.getByTestId('ref-div');
-        expect(spy1.history).toEqual([null, r1div]);
-        expect(spy2.history).toEqual([null]);
+        expect(history1).toEqual([null, r1div]);
+        expect(history2).toEqual([null]);
 
-        r.rerender(<TestRefObject ref={spy2.ref} />);
+        r.rerender(<TestRefObject ref={ref2} />);
         const r2div = r.getByTestId('ref-div');
-        expect(spy1.history).toEqual([null, r1div, null]);
-        expect(spy2.history).toEqual([null, r2div]);
+        expect(history1).toEqual([null, r1div, null]);
+        expect(history2).toEqual([null, r2div]);
 
         r.rerender(<div />);
-        expect(spy1.history).toEqual([null, r1div, null]);
-        expect(spy2.history).toEqual([null, r2div, null]);
+        expect(history1).toEqual([null, r1div, null]);
+        expect(history2).toEqual([null, r2div, null]);
       });
     });
   });
 
   describe('useMergeRefs', () => {
     test('Single ref', () => {
-      const spy = makeRefObjectSpy(null);
+      const [ref, history] = makeRefObjectSpy(null);
 
       const r = render(<TestRefCollection refs={{}} />);
-      expect(spy.history).toEqual([null]);
+      expect(history).toEqual([null]);
 
-      r.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
+      r.rerender(<TestRefCollection refs={{ ref }} />);
       const r1div = r.getByTestId('ref-div');
-      expect(spy.history).toEqual([null, r1div]);
+      expect(history).toEqual([null, r1div]);
 
-      r.rerender(<TestRefCollection refs={{ ref: spy.ref }} />);
-      expect(spy.history).toEqual([null, r1div]);
+      r.rerender(<TestRefCollection refs={{ ref }} />);
+      expect(history).toEqual([null, r1div]);
 
       r.rerender(<TestRefCollection refs={{}} />);
-      expect(spy.history).toEqual([null, r1div, null]);
+      expect(history).toEqual([null, r1div, null]);
     });
 
     test('No spurious assignments', () => {
       const fakeDiv = document.createElement('div');
-      const spy = makeRefObjectSpy(fakeDiv);
+      const [ref, history] = makeRefObjectSpy(fakeDiv);
 
       const r = render(<TestSpuriousCleanups refs={{}} />);
-      expect(spy.history).toEqual([fakeDiv]);
+      expect(history).toEqual([fakeDiv]);
 
       // Here we set a ref (and thus `useMergeRefs` stores it) but never `show` so it never gets assigned a value
       // If our code is bugged it might assign a value here, or set it to `null` or something...
-      r.rerender(<TestSpuriousCleanups refs={{ ref: spy.ref }} />);
-      expect(spy.history).toEqual([fakeDiv]);
+      r.rerender(<TestSpuriousCleanups refs={{ ref }} />);
+      expect(history).toEqual([fakeDiv]);
 
       // same here, it might try to do a spurious cleanup even though the ref was actually never assigned
       r.rerender(<TestSpuriousCleanups refs={{}} />);
-      expect(spy.history).toEqual([fakeDiv]);
+      expect(history).toEqual([fakeDiv]);
     });
   });
 });

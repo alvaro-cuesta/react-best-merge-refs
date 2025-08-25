@@ -1,9 +1,6 @@
 import type { RefObject } from 'react';
 
-type RefObjectSpy<T> = {
-  ref: RefObject<T | null>;
-  history: (T | null)[];
-};
+type RefObjectSpy<T> = [RefObject<T | null>, (T | null)[]];
 
 export function makeRefObjectSpy<T>(initialValue: T | null): RefObjectSpy<T> {
   const history = [initialValue];
@@ -22,8 +19,5 @@ export function makeRefObjectSpy<T>(initialValue: T | null): RefObjectSpy<T> {
     },
   );
 
-  return {
-    ref,
-    history,
-  };
+  return [ref, history];
 }
