@@ -112,6 +112,228 @@ describe('Callback refs (no cleanup)', () => {
       });
     });
   });
+
+  describe('useMergeRefs', () => {
+    test('Single ref', () => {
+      const ref = vi.fn();
+
+      const r = render(<TestRefCollection refs={{ ref }} />);
+      const r1div = r.getByTestId('ref-div');
+      expect(ref.mock.calls).toEqual([[r1div]]);
+
+      r.rerender(<TestRefCollection refs={{ ref }} />);
+      expect(ref.mock.calls).toEqual([[r1div]]);
+
+      r.rerender(<div />);
+      expect(ref.mock.calls).toEqual([[r1div], [null]]);
+    });
+
+    describe('All stable', () => {
+      test('None are called on re-render', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+      });
+    });
+
+    describe('Add a new ref', () => {
+      test('(Undefined) Only the added key is called on re-renders', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(
+          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
+        );
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+
+      test('(Null) Only the added key is called on re-renders', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(
+          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
+        );
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+
+      test('(Optional property) Only the added key is called on re-renders', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+    });
+
+    describe('Remove a ref', () => {
+      test('(Undefined) Only the removed key is cleaned up', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(
+          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
+        );
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+
+      test('(Null) Only the removed key is cleaned up', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3: null }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+
+      test('(Optional property) Only the removed key is cleaned up', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+      });
+    });
+
+    describe('External unstable', () => {
+      test('Only the unstable ref is called on every render', () => {
+        const ref1 = vi.fn();
+        const ref2 = vi.fn();
+        const ref3 = vi.fn();
+
+        const r = render(
+          <TestRefCollection
+            refs={{
+              ref1,
+              ref2,
+              ref3: (v) => {
+                ref3(v);
+              },
+            }}
+          />,
+        );
+        const r1div = r.getByTestId('ref-div');
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div]]);
+
+        r.rerender(
+          <TestRefCollection
+            refs={{
+              ref1,
+              ref2,
+              ref3: (v) => {
+                ref3(v);
+              },
+            }}
+          />,
+        );
+        expect(ref1.mock.calls).toEqual([[r1div]]);
+        expect(ref2.mock.calls).toEqual([[r1div]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null], [r1div]]);
+
+        r.rerender(<div />);
+        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+        expect(ref3.mock.calls).toEqual([[r1div], [null], [r1div], [null]]);
+      });
+    });
+  });
 });
 
 describe('Callback refs (with cleanup)', () => {
