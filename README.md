@@ -98,6 +98,10 @@ subtly broken as long as anyone merges them with unstable refs).
 See ["Example"](#example) for a very common use case that is broken in other libraries. This pattern is so common across
 the whole React ecosystem, I'm pretty sure most merged refs are subtly broken everywhere!
 
+See [Your React refs might be breaking someone else's
+code…](https://alvaro.cuesta.dev/blog/your-react-refs-might-be-breaking-someone-elses-code/) for a deep dive on the
+subtleties of ref breakage and how this library solves the issue.
+
 ### Why an object for refs instead of a simple array?
 
 Other merging libraries allow you to pass the refs as an array (or multiple arguments), but this can lead to subtle bugs
