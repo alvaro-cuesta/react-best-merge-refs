@@ -149,79 +149,44 @@ describe('Callback refs (no cleanup)', () => {
     });
 
     describe('Add a new ref', () => {
-      test('(Undefined) Only the added key is called on re-renders', () => {
-        const ref1 = vi.fn();
-        const ref2 = vi.fn();
-        const ref3 = vi.fn();
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])(
+        '(%s) Only the added key is called on re-renders',
+        (_, ref3Wrapper) => {
+          const ref1 = vi.fn();
+          const ref2 = vi.fn();
+          const ref3 = vi.fn();
 
-        const r = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
-        );
-        const r1div = r.getByTestId('ref-div');
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([]);
+          const r = render(
+            <TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />,
+          );
+          const r1div = r.getByTestId('ref-div');
+          expect(ref1.mock.calls).toEqual([[r1div]]);
+          expect(ref2.mock.calls).toEqual([[r1div]]);
+          expect(ref3.mock.calls).toEqual([]);
 
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div]]);
+          r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+          expect(ref1.mock.calls).toEqual([[r1div]]);
+          expect(ref2.mock.calls).toEqual([[r1div]]);
+          expect(ref3.mock.calls).toEqual([[r1div]]);
 
-        r.rerender(<div />);
-        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-      });
-
-      test('(Null) Only the added key is called on re-renders', () => {
-        const ref1 = vi.fn();
-        const ref2 = vi.fn();
-        const ref3 = vi.fn();
-
-        const r = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
-        );
-        const r1div = r.getByTestId('ref-div');
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div]]);
-
-        r.rerender(<div />);
-        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-      });
-
-      test('(Optional property) Only the added key is called on re-renders', () => {
-        const ref1 = vi.fn();
-        const ref2 = vi.fn();
-        const ref3 = vi.fn();
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div]]);
-
-        r.rerender(<div />);
-        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-      });
+          r.rerender(<div />);
+          expect(ref1.mock.calls).toEqual([[r1div], [null]]);
+          expect(ref2.mock.calls).toEqual([[r1div], [null]]);
+          expect(ref3.mock.calls).toEqual([[r1div], [null]]);
+        },
+      );
     });
 
     describe('Remove a ref', () => {
-      test('(Undefined) Only the removed key is cleaned up', () => {
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])('(%s) Only the removed key is cleaned up', (_, ref3Wrapper) => {
         const ref1 = vi.fn();
         const ref2 = vi.fn();
         const ref3 = vi.fn();
@@ -232,53 +197,7 @@ describe('Callback refs (no cleanup)', () => {
         expect(ref2.mock.calls).toEqual([[r1div]]);
         expect(ref3.mock.calls).toEqual([[r1div]]);
 
-        r.rerender(
-          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
-        );
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-
-        r.rerender(<div />);
-        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-      });
-
-      test('(Null) Only the removed key is cleaned up', () => {
-        const ref1 = vi.fn();
-        const ref2 = vi.fn();
-        const ref3 = vi.fn();
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div]]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3: null }} />);
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-
-        r.rerender(<div />);
-        expect(ref1.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref2.mock.calls).toEqual([[r1div], [null]]);
-        expect(ref3.mock.calls).toEqual([[r1div], [null]]);
-      });
-
-      test('(Optional property) Only the removed key is cleaned up', () => {
-        const ref1 = vi.fn();
-        const ref2 = vi.fn();
-        const ref3 = vi.fn();
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(ref1.mock.calls).toEqual([[r1div]]);
-        expect(ref2.mock.calls).toEqual([[r1div]]);
-        expect(ref3.mock.calls).toEqual([[r1div]]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />);
         expect(ref1.mock.calls).toEqual([[r1div]]);
         expect(ref2.mock.calls).toEqual([[r1div]]);
         expect(ref3.mock.calls).toEqual([[r1div], [null]]);
@@ -481,115 +400,56 @@ describe('Callback refs (with cleanup)', () => {
     });
 
     describe('Add a new ref', () => {
-      test('(Undefined) Only the added key is called on re-renders', () => {
-        const spies1 = makeRefCallbackWithCleanupSpy();
-        const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
-        const spies2 = makeRefCallbackWithCleanupSpy();
-        const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
-        const spies3 = makeRefCallbackWithCleanupSpy();
-        const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])(
+        '(%s) Only the added key is called on re-renders',
+        (_, ref3Wrapper) => {
+          const spies1 = makeRefCallbackWithCleanupSpy();
+          const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
+          const spies2 = makeRefCallbackWithCleanupSpy();
+          const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
+          const spies3 = makeRefCallbackWithCleanupSpy();
+          const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
 
-        const r = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
-        );
-        const r1div = r.getByTestId('ref-div');
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
+          const r = render(
+            <TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />,
+          );
+          const r1div = r.getByTestId('ref-div');
+          expect(spies1.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies1.cleanup.mock.calls).toEqual([]);
+          expect(spies2.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies2.cleanup.mock.calls).toEqual([]);
+          expect(spies3.setup.mock.calls).toEqual([]);
+          expect(spies3.cleanup.mock.calls).toEqual([]);
 
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
+          r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
+          expect(spies1.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies1.cleanup.mock.calls).toEqual([]);
+          expect(spies2.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies2.cleanup.mock.calls).toEqual([]);
+          expect(spies3.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies3.cleanup.mock.calls).toEqual([]);
 
-        r.rerender(<div />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([[]]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([[]]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-      });
-
-      test('(Null) Only the added key is called on re-renders', () => {
-        const spies1 = makeRefCallbackWithCleanupSpy();
-        const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
-        const spies2 = makeRefCallbackWithCleanupSpy();
-        const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
-        const spies3 = makeRefCallbackWithCleanupSpy();
-        const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
-
-        const r = render(
-          <TestRefCollection refs={{ ref1, ref2, ref3: null }} />,
-        );
-        const r1div = r.getByTestId('ref-div');
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<div />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([[]]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([[]]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-      });
-
-      test('(Optional property) Only the added key is called on re-renders', () => {
-        const spies1 = makeRefCallbackWithCleanupSpy();
-        const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
-        const spies2 = makeRefCallbackWithCleanupSpy();
-        const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
-        const spies3 = makeRefCallbackWithCleanupSpy();
-        const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<div />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([[]]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([[]]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-      });
+          r.rerender(<div />);
+          expect(spies1.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies1.cleanup.mock.calls).toEqual([[]]);
+          expect(spies2.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies2.cleanup.mock.calls).toEqual([[]]);
+          expect(spies3.setup.mock.calls).toEqual([[r1div]]);
+          expect(spies3.cleanup.mock.calls).toEqual([[]]);
+        },
+      );
     });
 
     describe('Remove a ref', () => {
-      test('(Undefined) Only the removed key is cleaned up', () => {
+      test.each([
+        ['Undefined', { ref3: undefined }],
+        ['Null', { ref3: null }],
+        ['Optional property', {}],
+      ])('(%s) Only the removed key is cleaned up', (_, ref3Wrapper) => {
         const spies1 = makeRefCallbackWithCleanupSpy();
         const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
         const spies2 = makeRefCallbackWithCleanupSpy();
@@ -606,77 +466,7 @@ describe('Callback refs (with cleanup)', () => {
         expect(spies3.setup.mock.calls).toEqual([[r1div]]);
         expect(spies3.cleanup.mock.calls).toEqual([]);
 
-        r.rerender(
-          <TestRefCollection refs={{ ref1, ref2, ref3: undefined }} />,
-        );
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-
-        r.rerender(<div />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([[]]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([[]]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-      });
-
-      test('(Null) Only the removed key is cleaned up', () => {
-        const spies1 = makeRefCallbackWithCleanupSpy();
-        const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
-        const spies2 = makeRefCallbackWithCleanupSpy();
-        const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
-        const spies3 = makeRefCallbackWithCleanupSpy();
-        const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2, ref: null }} />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-
-        r.rerender(<div />);
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([[]]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([[]]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([[]]);
-      });
-
-      test('(Optional property) Only the removed key is cleaned up', () => {
-        const spies1 = makeRefCallbackWithCleanupSpy();
-        const ref1 = makeSpiedRefCallbackWithCleanup(spies1);
-        const spies2 = makeRefCallbackWithCleanupSpy();
-        const ref2 = makeSpiedRefCallbackWithCleanup(spies2);
-        const spies3 = makeRefCallbackWithCleanupSpy();
-        const ref3 = makeSpiedRefCallbackWithCleanup(spies3);
-
-        const r = render(<TestRefCollection refs={{ ref1, ref2, ref3 }} />);
-        const r1div = r.getByTestId('ref-div');
-        expect(spies1.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies1.cleanup.mock.calls).toEqual([]);
-        expect(spies2.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies2.cleanup.mock.calls).toEqual([]);
-        expect(spies3.setup.mock.calls).toEqual([[r1div]]);
-        expect(spies3.cleanup.mock.calls).toEqual([]);
-
-        r.rerender(<TestRefCollection refs={{ ref1, ref2 }} />);
+        r.rerender(<TestRefCollection refs={{ ref1, ref2, ...ref3Wrapper }} />);
         expect(spies1.setup.mock.calls).toEqual([[r1div]]);
         expect(spies1.cleanup.mock.calls).toEqual([]);
         expect(spies2.setup.mock.calls).toEqual([[r1div]]);
